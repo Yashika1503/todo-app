@@ -1,5 +1,33 @@
 const Task = require("../models/Task");
 
+const handleRepeatingTasks = async (userId) => {
+    const now = new Date();
+
+    const repeatingTasks = await Task.find({
+        user: userId,
+        repeat: { $ne: "none" },
+        dueDate: { $lt: now }
+    });
+
+    for (let task of repeatingTasks) {
+        let nextDueDate = new Date(task.dueDate);
+
+        if (task.repeat === "daily") {
+        nextDueDate.setDate(nextDueDate.getDate() + 1);
+        }
+
+        if (task.repeat === "weekly") {
+        nextDueDate.setDate(nextDueDate.getDate() + 7);
+        }
+
+        task.dueDate = nextDueDate;
+        task.completed = false;
+
+        await task.save();
+    }
+};
+
+
 // CREATE TASK
 exports.createTask = async (req, res) => {
     try {
@@ -30,7 +58,10 @@ exports.createTask = async (req, res) => {
     // GET TODAY'S TASKS
     exports.getTodayTasks = async (req, res) => {
         try {
+            await handleRepeatingTasks(req.user._id);
+
             const startOfDay = new Date();
+
             startOfDay.setHours(0, 0, 0, 0);
 
             const endOfDay = new Date();
@@ -50,7 +81,10 @@ exports.createTask = async (req, res) => {
     // GET PAST TASKS
     exports.getPastTasks = async (req, res) => {
         try {
+            await handleRepeatingTasks(req.user._id);
+
             const startOfDay = new Date();
+
             startOfDay.setHours(0, 0, 0, 0);
 
             const tasks = await Task.find({
@@ -67,7 +101,10 @@ exports.createTask = async (req, res) => {
     // GET FUTURE TASKS
     exports.getFutureTasks = async (req, res) => {
         try {
+            await handleRepeatingTasks(req.user._id);
+
             const endOfDay = new Date();
+
             endOfDay.setHours(23, 59, 59, 999);
 
             const tasks = await Task.find({
