@@ -13,13 +13,16 @@ const handleRepeatingTasks = async (userId) => {
     for (let task of repeatingTasks) {
         let nextDueDate = new Date(task.dueDate);
 
-        if (task.repeat === "daily") {
-        nextDueDate.setDate(nextDueDate.getDate() + 1);
+        while (nextDueDate < now) {
+            if (task.repeat === "daily") {
+                nextDueDate.setDate(nextDueDate.getDate() + 1);
+            }
+
+            if (task.repeat === "weekly") {
+                nextDueDate.setDate(nextDueDate.getDate() + 7);
+            }
         }
 
-        if (task.repeat === "weekly") {
-        nextDueDate.setDate(nextDueDate.getDate() + 7);
-        }
 
         task.dueDate = nextDueDate;
         task.completed = false;
@@ -46,19 +49,52 @@ const getDueReminders = async (userId) => {
 // CREATE TASK
 exports.createTask = async (req, res) => {
     try {
-        const task = await Task.create({
+        const { title, dueDate, repeat, reminderTime } = req.body;
+
+        if (!title || title.trim() === "") {
+            return res.status(400).json({ message: "Title is required" });
+        }
+
+        if (!dueDate) {
+            return res.status(400).json({ message: "Due date is required" });
+        }
+
+        const parsedDueDate = new Date(dueDate);
+        if (isNaN(parsedDueDate.getTime())) {
+            return res.status(400).json({ message: "Invalid due date" });
+        }
+
+        if (reminderTime) {
+            const parsedReminder = new Date(reminderTime);
+            if (isNaN(parsedReminder.getTime())) {
+                return res.status(400).json({ message: "Invalid reminder time" });
+            }
+
+            if (parsedReminder > parsedDueDate) {
+                return res
+                    .status(400)
+                    .json({ message: "Reminder cannot be after due date" });
+            }
+        }
+
+    if (repeat && !["none", "daily", "weekly"].includes(repeat)) {
+        return res.status(400).json({ message: "Invalid repeat option" });
+    }
+
+    const task = await Task.create({
         user: req.user._id,
-        title: req.body.title,
-        dueDate: req.body.dueDate,
-        reminderTime: req.body.reminderTime,
-        repeat: req.body.repeat
+        title: title.trim(),
+        dueDate: parsedDueDate,
+        reminderTime,
+        repeat: repeat || "none"
         });
 
-        res.status(201).json(task);
+    res.status(201).json(task);
     } catch (error) {
         res.status(500).json({ message: "Failed to create task" });
     }
 };
+
 
 // GET ALL TASKS
 exports.getTasks = async (req, res) => {
@@ -154,14 +190,46 @@ exports.getReminders = async (req, res) => {
 // UPDATE TASK
 exports.updateTask = async (req, res) => {
     try {
+        const allowedFields = [
+        "title",
+        "dueDate",
+        "completed",
+        "repeat",
+        "reminderTime"
+        ];
+
+        const updates = {};
+
+        for (let key of allowedFields) {
+            if (req.body[key] !== undefined) {
+                updates[key] = req.body[key];
+            }
+        }
+
+        if (updates.dueDate) {
+            const parsedDate = new Date(updates.dueDate);
+            if (isNaN(parsedDate.getTime())) {
+                return res.status(400).json({ message: "Invalid due date" });
+            }
+            updates.dueDate = parsedDate;
+        }
+
+        if (updates.repeat && !["none", "daily", "weekly"].includes(updates.repeat)) {
+            return res.status(400).json({ message: "Invalid repeat option" });
+        }
+
+        if (updates.reminderTime) {
+            updates.reminderSent = false;
+        }
+
         const task = await Task.findOneAndUpdate(
-        { _id: req.params.id, user: req.user._id },
-        req.body,
-        { new: true }
+            { _id: req.params.id, user: req.user._id },
+            updates,
+            { new: true }
         );
 
         if (!task) {
-        return res.status(404).json({ message: "Task not found" });
+            return res.status(404).json({ message: "Task not found" });
         }
 
         res.json(task);
