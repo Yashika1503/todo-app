@@ -28,6 +28,11 @@ const taskSchema = new mongoose.Schema(
             type: Date
         },
 
+        reminderSent: {
+            type: Boolean,
+            default: false
+        },
+
         repeat: {
             type: String,
             enum: ["none", "daily", "weekly", "custom"],
