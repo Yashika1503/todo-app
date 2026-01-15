@@ -6,6 +6,7 @@ exports.createTask = async (req, res) => {
         const task = await Task.create({
         user: req.user._id,
         title: req.body.title,
+        dueDate: req.body.dueDate,
         reminderTime: req.body.reminderTime,
         repeat: req.body.repeat
         });
@@ -36,9 +37,9 @@ exports.createTask = async (req, res) => {
             endOfDay.setHours(23, 59, 59, 999);
 
             const tasks = await Task.find({
-            user: req.user._id,
-            createdAt: { $gte: startOfDay, $lte: endOfDay }
-            }).sort({ createdAt: -1 });
+                user: req.user._id,
+                dueDate: { $gte: startOfDay, $lte: endOfDay }
+            }).sort({ dueDate: 1 });
 
             res.json(tasks);
         } catch (error) {
@@ -53,9 +54,9 @@ exports.createTask = async (req, res) => {
             startOfDay.setHours(0, 0, 0, 0);
 
             const tasks = await Task.find({
-            user: req.user._id,
-            createdAt: { $lt: startOfDay }
-            }).sort({ createdAt: -1 });
+                user: req.user._id,
+                dueDate: { $lt: startOfDay }
+            }).sort({ dueDate: -1 });
 
             res.json(tasks);
         } catch (error) {
@@ -70,9 +71,9 @@ exports.createTask = async (req, res) => {
             endOfDay.setHours(23, 59, 59, 999);
 
             const tasks = await Task.find({
-            user: req.user._id,
-            createdAt: { $gt: endOfDay }
-            }).sort({ createdAt: 1 });
+                user: req.user._id,
+                dueDate: { $gt: endOfDay }
+            }).sort({ dueDate: 1 });
 
             res.json(tasks);
         } catch (error) {
