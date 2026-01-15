@@ -26,6 +26,60 @@ exports.createTask = async (req, res) => {
     }
     };
 
+    // GET TODAY'S TASKS
+    exports.getTodayTasks = async (req, res) => {
+        try {
+            const startOfDay = new Date();
+            startOfDay.setHours(0, 0, 0, 0);
+
+            const endOfDay = new Date();
+            endOfDay.setHours(23, 59, 59, 999);
+
+            const tasks = await Task.find({
+            user: req.user._id,
+            createdAt: { $gte: startOfDay, $lte: endOfDay }
+            }).sort({ createdAt: -1 });
+
+            res.json(tasks);
+        } catch (error) {
+            res.status(500).json({ message: "Failed to fetch today's tasks" });
+        }
+    };
+
+    // GET PAST TASKS
+    exports.getPastTasks = async (req, res) => {
+        try {
+            const startOfDay = new Date();
+            startOfDay.setHours(0, 0, 0, 0);
+
+            const tasks = await Task.find({
+            user: req.user._id,
+            createdAt: { $lt: startOfDay }
+            }).sort({ createdAt: -1 });
+
+            res.json(tasks);
+        } catch (error) {
+            res.status(500).json({ message: "Failed to fetch past tasks" });
+        }
+    };
+
+    // GET FUTURE TASKS
+    exports.getFutureTasks = async (req, res) => {
+        try {
+            const endOfDay = new Date();
+            endOfDay.setHours(23, 59, 59, 999);
+
+            const tasks = await Task.find({
+            user: req.user._id,
+            createdAt: { $gt: endOfDay }
+            }).sort({ createdAt: 1 });
+
+            res.json(tasks);
+        } catch (error) {
+            res.status(500).json({ message: "Failed to fetch future tasks" });
+        }
+    };
+
     // UPDATE TASK
     exports.updateTask = async (req, res) => {
     try {
