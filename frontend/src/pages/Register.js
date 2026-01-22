@@ -11,10 +11,16 @@ function Register() {
         e.preventDefault();
 
         try {
-            await API.post("/auth/register", { email, password });
-            navigate("/");
-        } catch {
-            alert("Register failed");
+            await API.post("/auth/register", {
+                email,
+                password
+            });
+
+            alert("Registration successful! Please login.");
+            navigate("/"); // BACK TO LOGIN
+        } catch (err) {
+            console.error("REGISTER ERROR:", err.response?.data || err.message);
+            alert(err.response?.data?.message || "Failed to register");
         }
     };
 

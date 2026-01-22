@@ -1,24 +1,28 @@
-import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react";
 import API from "../api/axios";
 
 function Tasks() {
     const [tasks, setTasks] = useState([]);
     const [title, setTitle] = useState("");
     const [dueDate, setDueDate] = useState("");
-    const [filter, setFilter] = useState("today"); // today, past, future
+    const [filter, setFilter] = useState("today");
 
-    // Fetch tasks whenever filter changes
+    const navigate = useNavigate();
+
     useEffect(() => {
-        fetchTasks();
-    }, [filter]);
+        const token = localStorage.getItem("token");
+        if (!token) {
+        navigate("/", { replace: true });
+        }
+    }, [navigate]);
 
     // Fetch all tasks and filter in frontend
-    const fetchTasks = async () => {
+    const fetchTasks = useCallback(async () => {
         try {
             const res = await API.get("/tasks");
             let filtered = res.data;
 
-            const now = new Date();
             const startOfDay = new Date();
             startOfDay.setHours(0, 0, 0, 0);
             const endOfDay = new Date();
@@ -42,7 +46,11 @@ function Tasks() {
             console.error(err);
             alert("Failed to fetch tasks");
         }
-    };
+    }, [filter]);
+
+    useEffect(() => {
+        fetchTasks();
+    }, [fetchTasks]);
 
     // Add new task
     const addTask = async (e) => {
