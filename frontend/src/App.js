@@ -4,44 +4,23 @@ import Register from "./pages/Register";
 import Tasks from "./pages/Tasks";
 import Profile from "./pages/Profile";
 
-const isAuthenticated = () => {
-  return !!localStorage.getItem("token");
-};
-
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Login */}
-        <Route
-          path="/"
-          element={isAuthenticated() ? <Navigate to="/tasks" /> : <Login />}
-        />
-        <Route
-          path="/login"
-          element={isAuthenticated() ? <Navigate to="/tasks" /> : <Login />}
-        />
+        {/* Default */}
+        <Route path="/" element={<Navigate to="/login" />} />
 
-        {/* Register */}
-        <Route
-          path="/register"
-          element={isAuthenticated() ? <Navigate to="/tasks" /> : <Register />}
-        />
+        {/* Auth */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-        {/* Tasks */}
-        <Route
-          path="/tasks"
-          element={isAuthenticated() ? <Tasks /> : <Navigate to="/login" />}
-        />
-
-        {/* Profile */}
-        <Route
-          path="/profile"
-          element={isAuthenticated() ? <Profile /> : <Navigate to="/login" />}
-        />
+        {/* App */}
+        <Route path="/tasks" element={<Tasks />} />
+        <Route path="/profile" element={<Profile />} />
 
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" />} />
+        <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>
   );

@@ -12,9 +12,12 @@ function Login() {
 
         try {
             const res = await API.post("/auth/login", { email, password });
+            console.log("LOGIN RESPONSE:", res.data);
+
             localStorage.setItem("token", res.data.token);
             navigate("/tasks");
         } catch (err) {
+            console.error(err.response?.data || err.message);
             alert("Login failed");
         }
     };
